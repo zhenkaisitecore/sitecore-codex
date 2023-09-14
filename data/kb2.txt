@@ -1,0 +1,74 @@
+
+Skip to page content
+Portal Logo
+Documentation
+Downloads
+Learning
+Community
+Support
+Log in
+Home
+Known Issues
+KB1001774
+Search
+%kb_name - %short_descr
+Content Tree Search by item ID or full path returns multiple results
+ Switch language  Permalink to this article
+Description
+Starting from Sitecore XP 10.0, the behavior of the Content Tree Search has been changed. Sitecore no longer fetches data from databases (or Sitecore caches) when an item ID or path is used as a search term. Instead, a query against a search index is run. The search is performed against all text fields of an item (using the Content full-text search field) and might return more results than in the previous Sitecore XP version.
+
+Solution
+To switch back to the old behavior:
+
+Create a custom class that aborts requests to the search index if the Direct Hit is found in the database:
+using Sitecore.Diagnostics;
+
+namespace Custom.Pipelines.Search
+{
+    internal class AbortIfDirectHitIsFound
+    {
+        public void Process(SearchArgs args)
+        {
+            Assert.ArgumentNotNull(args, "args");
+            if (args.Result.Categories.Any(category => category.Name == "Direct Hit"))
+            {
+                args.AbortPipeline();
+            }
+        }
+    }
+}
+Build the class into an assembly.
+Put the assembly to the \bin folder of the website.
+Reference the class from the configuration by creating a configuration patch file in the \App_Config\Include\zzz folder:
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration xmlns:patch="http://www.sitecore.net/xmlconfig/">
+  <sitecore>
+    <pipelines>
+      <search>
+        <processor type="Sitecore.Pipelines.Search.IDResolver, Sitecore.Kernel" patch:before="*[1]" />
+        <processor type="Sitecore.Pipelines.Search.PathResolver, Sitecore.Kernel" patch:after="*[@type='Sitecore.Pipelines.Search.IDResolver, Sitecore.Kernel']" />
+        <processor type="Custom.Pipelines.Search.AbortIfDirectHitIsFound, Custom.Assembly" patch:before="*[@type='Sitecore.ContentSearch.Client.Pipelines.Search.SearchContentSearchIndex, Sitecore.ContentSearch.Client']" />
+      </search>
+    </pipelines>
+  </sitecore>
+</configuration>
+Note
+In Sitecore XP 10.3, the changes mentioned in the Description have been reverted, so that the Content Tree Search works taking into account an item ID and path as in product versions previous to Sitecore XP 10.0.
+
+Affected Software:
+Experience Platform
+Applies To:
+10.0.0 (Initial Release) +
+Fixed In (Not Applicable):
+10.3.0 (Initial Release)
+Reference Number:
+474407
+Sitecore Categories:
+Content Search: Solr/Lucene
+Publication Date:
+May 4, 2022
+Last Updated:
+March 6, 2023
+Helpful?
+ 
+© Copyright 2023, Sitecore. All Rights Reserved  Trust Center  Legal Hub  Privacy  Your privacy choices  Own the Experience®

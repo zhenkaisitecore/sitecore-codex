@@ -1,0 +1,41 @@
+Skip to main content
+Sitecore Documentation
+Products
+Resources
+
+
+Resouces
+XP logo
+Users
+Developers
+Archive
+Search:
+Search...
+
+1.8
+
+EN
+Sitecore Experience AcceleratorWorking with contentAdding and changing contentThe navigation renderings
+The navigation renderings
+Current version: 1.8
+Navigation is an important part of any page. SXA comes with a great variety of navigation variants and styles. By default, the following navigation renderings are available:
+
+Archive - provides clear chronological navigation and divides content into years, months, weeks, or days. Good for blog pages.
+
+The archive component.
+Breadcrumb - generates a breadcrumb that lists all path items from the root to the current item. Supports rendering variants.
+
+The Breadcrumb component.
+Link and Link list - a link adds a link to a sibling or parent page, a page from browsing history, an arbitrary page or a resource. Using this dedicated component for your links helps you to make sure all your hyperlinks lead exactly where they should, in a browser window you would expect, with a correct class and a proper description. A Link list rendering displays lists with items that contain a title, link, and text.
+
+The Link list component.
+Navigation - generates a navigation menu. The navigation renderings in SXA help you design navigation in a way that helps website users. See Add navigation for more details on styling.
+
+Big/Fat navigation component.
+Do you have some feedback for us?
+
+If you have suggestions for improving this article, let us know!
+
+Privacy policy
+Sitecore Trust Center
+Copyright © 1999-2023 Sitecore

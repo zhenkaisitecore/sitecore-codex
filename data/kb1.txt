@@ -1,0 +1,54 @@
+
+Skip to page content
+Portal Logo
+Documentation
+Downloads
+Learning
+Community
+Support
+Log in
+Home
+Known Issues
+KB1002165
+Search
+%kb_name - %short_descr
+Solr Error : ["undefined field local"] errors in the logs
+ Switch language  Permalink to this article
+Description
+Errors similar to the following can be found in the log records:
+
+Error: Solr Error : ["undefined field query"] - Query attempted: [query: <name of field>]
+or
+
+Error: Solr Error : ["undefined field local"] - Query attempted: [local: <name of field>]
+The root cause of this issue is that all queries that start from the query: or local: prefix lead to generating the query to Solr. However, a request to the index during resolving the data source for the SXA component must not be sent.
+
+Solution
+To resolve the issue, consider one of the following options:
+
+Upgrade Sitecore XP instance to Sitecore XP 10.0 and SXA 10.0.0 or later.
+Download and install the corresponding cumulative hotfix or patch compatible with the affected product version available in:
+For Sitecore XP 9.3 and SXA 9.3.0: KB1001754
+For Sitecore XP 9.2 and SXA 1.9: KB1001753
+For Sitecore XP 9.1.1 and SXA 1.8.1: KB1001751
+For Sitecore XP 9.0.2, download and install the patch compatible with the affected  Sitecore XP and SXA product version found on this page:
+https://github.com/SitecoreSupport/Sitecore.Support.368851.373937/releases
+Note that the issue does not affect the resolving data source process, therefore, such errors can be safely ignored.
+
+Affected Software:
+Experience Platform
+Applies To:
+9.0 rev. 180604 (Update-2) +
+Fixed In (Not Applicable):
+10.0.0 (Initial Release)
+Reference Number:
+368851
+Sitecore Categories:
+SXA - Experience Accelerator, Content Search: Solr/Lucene
+Publication Date:
+July 8, 2022
+Last Updated:
+July 6, 2023
+Helpful?
+ 
+© Copyright 2023, Sitecore. All Rights Reserved  Trust Center  Legal Hub  Privacy  Your privacy choices  Own the Experience®

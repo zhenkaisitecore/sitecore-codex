@@ -1,0 +1,149 @@
+Skip to main content
+Sitecore Documentation
+Products
+Resources
+
+
+Resouces
+XP logo
+Users
+Developers
+Archive
+Search:
+Search...
+
+9.0
+
+EN
+Platform Administration and ArchitectureRole scaling and configurationScaling and configuring searchContent searchConfigure indexingSwitch Solr indexes
+Switch Solr indexes
+Current version: 9.0
+You can set up Solr to rebuild an index in a separate core so that the rebuilding does not affect the search index that is currently used. Once the rebuilding and the optimization of the index completes, Sitecore switches the two cores, and the rebuilt and optimized index is used.
+
+The SwitchOnRebuildSolrSearchIndex class inherits from the SolrSearchIndex class and adds the capability of maintaining two cores for a particular index. Because this is only important for production environments, you can reconfigure your custom index with the SwitchOnRebuildSolrSearchIndex implementation during testing and before moving to a production environment.
+
+Note
+In Sitecore 9.0 update 2 and later there is also support for switching SolrCloud indexes.
+
+When it has fully rebuilt the index, Sitecore switches the primary and secondary cores by sending a SWAP request to Solr.
+
+To create a duplicate Solr index and set up Solr to rebuild an index in a separate core:
+
+From the Solr server, copy the existing itembuckets folder. Call the copy itembuckets_sec.
+
+Update the itembuckets_sec/core.properties file and set name of the new core:
+
+name=itembuckets_sec
+
+Restart Solr.
+
+Check the two cores. You can do this by visiting these URLs (change as appropriate for your actual setup):
+
+http://localhost:8983/solr/itembuckets/select/?q=*:*&version=2.2&start=0&rows=10&indent=on
+
+http://localhost:8983/solr/itembuckets_sec/select/?q=*:*&version=2.2&start=0&rows=10&indent=on
+
+Both should return 0 results (but you will see some XML).
+
+To use this implementation, change the type reference on a particular search index to Sitecore.ContentSearch.SolrProvider.SwitchOnRebuildSolrSearchIndex, and add the rebuildcore parameter:
+
+Copy
+<indexes hint="list:AddIndex">
+   <index id="content_index"
+          type="Sitecore.ContentSearch.SolrProvider.SwitchOnRebuildSolrSearchIndex, 
+                Sitecore.ContentSearch.SolrProvider">
+       <param desc="name">$(id)</param>
+        <param desc="core">itembuckets</param>
+  <param desc="rebuildcore">itembuckets_sec</param>
+...
+Note
+After you have changed the configuration file, your website uses indexes from the primary core. Each time you initiate a full index rebuild, Sitecore does this in the secondary core. The secondary core then becomes the primary one after the rebuild.
+
+Separate cores for each index
+If you configure multiple indexes to share the same core, then the secondary core becomes the primary for all indexes each time you perform a full index rebuild.
+
+For example, assume that you have a configuration similar to this:
+
+Copy
+<index id="sitecore_web_index" type="Sitecore.ContentSearch.SolrProvider.SwitchOnRebuildSolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+    <param desc="name">$(id)</param>
+    <param desc="core">itembucket</param>
+    <param desc="rebuildcore">itembucket_web_rebuild</param>
+...
+<index id="sitecore_master_index" type="Sitecore.ContentSearch.SolrProvider.SolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+    <param desc="name">$(id)</param>
+    <param desc="core">itembucket</param>
+    <param desc="propertyStore" ref="contentSearch/databasePropertyStore" param1="$(id)" />
+...
+When Sitecore has finished rebuilding the index, both indexes use the itembucket_web_rebuild core, even if you have not specified the SwitchOnRebuild behavior for the sitecore_master_index index.
+
+For this reason, you should configure separate cores for each index in production. You can do this by using configuration similar to this:
+
+Copy
+<index id="sitecore_web_index" type="Sitecore.ContentSearch.SolrProvider.SwitchOnRebuildSolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+    <param desc="name">$(id)</param>
+    <param desc="core">$(id)</param>
+    <param desc="rebuildcore">$(id)_rebuild</param>
+...
+<index id="sitecore_master_index" type="Sitecore.ContentSearch.SolrProvider.SolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+    <param desc="name">$(id)</param>
+    <param desc="core">$(id)</param>
+    <param desc="propertyStore" ref="contentSearch/databasePropertyStore" param1="$(id)" />
+...
+This helps you avoid unclear behaviors involving SwitchOnRebuild and cache clearing.
+
+Switch SolrCloud indexes
+Note
+The features described in this section are available in Sitecore 9, Update 2, and later.
+
+You use the SwitchOnRebuildSolrSearchIndex class to rebuild and switch Solr indexes. This implementation uses Solr aliases instead of collection names.
+
+The mechanism for maintaining and switching two indexes is different when using SolrCloud. The implementation in the SwitchOnRebuildSolrCloudSearchIndex class uses collection aliases: it uses the active alias for search and update operations and the rebuild alias for rebuild operations. When a rebuild operation finishes, the CREATEALIAS command swaps the collections the aliases reference.
+
+The configuration is similar to what is described for Solr, except for this:
+
+Copy
+<index id="sitecore_web_index" type="Sitecore.ContentSearch.SolrProvider.SwitchOnRebuildSolrCloudSearchIndex, Sitecore.ContentSearch.SolrProvider">
+  <param desc="mainalias">$(id)MainAlias</param>
+  <param desc="rebuildalias">$(id)RebuildAlias</param>
+  <param desc="collection">$(id)</param>
+  <param desc="rebuildcollection">$(id)_rebuild</param>
+...
+</index>
+where
+
+mainalias and rebuildalias: names for active and rebuild aliases respectively which will be used by a Sitecore index.
+
+collection and rebuildcollection: names of Solr collections which will be used for storing the Sitecore index.
+
+If the ContentSearch.Solr.EnforceAliasCreation setting is true, a Sitecore instance creates aliases and maps them to collections if they do not already exist. You can also create the aliases manually.
+
+Follow these guidelines when you configure Sitecore to use SolrCloud:
+
+Only use the SwitchOnRebuildSolrCloudSearchIndex index type in combination with an active index update strategy (index has at least one index update strategy other than manual).
+
+Only one Sitecore instance can use the SwitchOnRebuildSolrCloudSearchIndex index type for a particular search index. All other Sitecore instances must use the SolrSearchIndex type, and also use the main alias as the core parameter:
+
+Copy
+<index id="sitecore_web_index" type="Sitecore.ContentSearch.SolrProvider.SolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+  <param desc="core">$(id)MainAlias</param>
+In the Sitecore instance responsible for indexing, you must set the instance name using the InstanceName setting.
+
+For example:
+
+Copy
+<setting name="InstanceName" value="YOUR_UNIQUE_INSTANCE_NAME" />
+This prevents losing information about the active Solr collection if the machine name (Environment.MachineName) or the site name (HostingEnvironment.SiteName) change during a new deployment.
+
+All other instances reference the search indexes by the main alias, which does not change.
+
+Do you have some feedback for us?
+
+If you have suggestions for improving this article, let us know!
+
+Switch Solr indexes
+Separate cores for each index
+Switch SolrCloud indexes
+Privacy policy
+Sitecore Trust Center
+Copyright © 1999-2023 Sitecore
